@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kingdom of Spain - Admin Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+  <header class="bg-blue-900 text-white p-4 flex justify-between items-center">
+    <h1 class="text-2xl font-bold">Admin Panel - Kingdom of Spain</h1>
+    <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded shadow transition">Logout</button>
+  </header>
+
+  <main class="flex-grow container mx-auto p-4 space-y-8">
+    <!-- Claims Section -->
+    <section id="claimsSection" class="bg-white rounded shadow p-4">
+      <h2 class="text-xl font-semibold mb-3">Claims</h2>
+      <div id="claimsList" class="space-y-4 max-h-64 overflow-y-auto">
+        <!-- Claims will be loaded here -->
+      </div>
+    </section>
+
+    <!-- Advertising Upload Section -->
+    <section id="advertisingUploadSection" class="bg-white rounded shadow p-4">
+      <h2 class="text-xl font-semibold mb-3">Upload Advertising Images</h2>
+      <form id="adUploadForm" class="space-y-4">
+        <input type="file" id="adImageInput" accept="image/*" multiple required class="block" />
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Upload</button>
+      </form>
+    </section>
+
+    <!-- Events Upload Section -->
+    <section id="eventsUploadSection" class="bg-white rounded shadow p-4">
+      <h2 class="text-xl font-semibold mb-3">Upload Events</h2>
+      <form id="eventUploadForm" class="space-y-4">
+        <textarea id="eventTextInput" rows="3" placeholder="Enter event description" required class="w-full border border-gray-300 rounded px-3 py-2"></textarea>
+        <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Add Event</button>
+      </form>
+    </section>
+
+    <!-- Announcements Upload Section -->
+    <section id="announcementUploadSection" class="bg-white rounded shadow p-4">
+      <h2 class="text-xl font-semibold mb-3">Upload Announcements</h2>
+      <form id="announcementUploadForm" class="space-y-4">
+        <textarea id="announcementTextInput" rows="3" placeholder="Enter announcement text" required class="w-full border border-gray-300 rounded px-3 py-2"></textarea>
+        <button type="submit" class="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700">Add Announcement</button>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEYS = {
+      announcements: 'kingdom_announcements',
+      ads: 'kingdom_ads',
+      events: 'kingdom_events',
+      claims: 'kingdom_claims'
+    };
+
+    // Load data from localStorage
+    function loadData(key) {
+      const data = localStorage.getItem(key);
+      return data ? JSON.parse(data) : [];
+    }
+
+    // Save data to localStorage
+    function saveData(key, data) {
+      localStorage.setItem(key, JSON.stringify(data));
+    }
+
+    // Render claims with accept/reject buttons
+    function renderClaims() {
+      const claims = loadData(STORAGE_KEYS.claims);
+      const container = document.getElementById('claimsList');
+      container.innerHTML = '';
+      if (claims.length === 0) {
+        container.innerHTML = '<p class="text-gray-500">No claims available.</p>';
+        return;
+      }
+      claims.forEach((claim, index) => {
+        const div = document.createElement('div');
+        div.className = 'border p-3 rounded shadow flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0';
+        const info = document.createElement('div');
+        info.innerHTML = '<strong>Type:</strong> ' + claim.type + ' <br/><strong>Description:</strong> ' + claim.description + ' <br/><strong>Status:</strong> <span class="font-semibold">' + claim.status + '</span>';
+        div.appendChild(info);
+
+        if (claim.status === 'Pending') {
+          const buttons = document.createElement('div');
+          buttons.className = 'space-x-2';
+
+          const acceptBtn = document.createElement('button');
+          acceptBtn.textContent = 'Accept';
+          acceptBtn.className = 'px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700';
+          acceptBtn.addEventListener('click', () => {
+            updateClaimStatus(index, 'Accepted');
+          });
+
+          const rejectBtn = document.createElement('button');
+          rejectBtn.textContent = 'Reject';
+          rejectBtn.className = 'px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700';
+          rejectBtn.addEventListener('click', () => {
+            updateClaimStatus(index, 'Rejected');
+          });
+
+          buttons.appendChild(acceptBtn);
+          buttons.appendChild(rejectBtn);
+          div.appendChild(buttons);
+        }
+
+        container.appendChild(div);
+      });
+    }
+
+    // Update claim status and save
+    function updateClaimStatus(index, status) {
+      const claims = loadData(STORAGE_KEYS.claims);
+      if (claims[index]) {
+        claims[index].status = status;
+        saveData(STORAGE_KEYS.claims, claims);
+        renderClaims();
+      }
+    }
+
+    // Handle ad image uploads
+    const adUploadForm = document.getElementById('adUploadForm');
+    const adImageInput = document.getElementById('adImageInput');
+
+    adUploadForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const files = adImageInput.files;
+      if (!files.length) return;
+      const ads = loadData(STORAGE_KEYS.ads);
+
+      // Read files as base64 and store
+      const readers = [];
+      for (let i = 0; i < files.length; i++) {
+        readers.push(new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (event) => resolve(event.target.result);
+          reader.readAsDataURL(files[i]);
+        }));
+      }
+
+      Promise.all(readers).then((images) => {
+        ads.push(...images);
+        saveData(STORAGE_KEYS.ads, ads);
+        alert('Advertising images uploaded successfully.');
+        adUploadForm.reset();
+      });
+    });
+
+    // Handle event uploads
+    const eventUploadForm = document.getElementById('eventUploadForm');
+    const eventTextInput = document.getElementById('eventTextInput');
+
+    eventUploadForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const eventText = eventTextInput.value.trim();
+      if (!eventText) return;
+      const events = loadData(STORAGE_KEYS.events);
+      events.push(eventText);
+      saveData(STORAGE_KEYS.events, events);
+      alert('Event added successfully.');
+      eventUploadForm.reset();
+    });
+
+    // Handle announcement uploads
+    const announcementUploadForm = document.getElementById('announcementUploadForm');
+    const announcementTextInput = document.getElementById('announcementTextInput');
+
+    announcementUploadForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const announcementText = announcementTextInput.value.trim();
+      if (!announcementText) return;
+      const announcements = loadData(STORAGE_KEYS.announcements);
+      announcements.push(announcementText);
+      saveData(STORAGE_KEYS.announcements, announcements);
+      alert('Announcement added successfully.');
+      announcementUploadForm.reset();
+    });
+
+    // Logout button
+    const logoutBtn = document.getElementById('logoutBtn');
+    logoutBtn.addEventListener('click', () => {
+      window.location.href = 'index.html';
+    });
+
+    // Initial render
+    renderClaims();
+  </script>
+</body>
+</html>
