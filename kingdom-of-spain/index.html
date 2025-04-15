@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kingdom of Spain - Home</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+    }
+  </style>
+</head>
+  <body class="bg-gray-50 min-h-screen flex flex-col" style="background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Flag_of_Spain.svg/1280px-Flag_of_Spain.svg.png'); background-size: cover; background-position: center;">
+  <header class="bg-blue-900 text-white p-4 flex justify-between items-center">
+    <h1 class="text-2xl font-bold">Kingdom of Spain</h1>
+    <button id="justiceBtn" class="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-2 px-4 rounded shadow transition">Justice</button>
+    <button id="adminPanelBtn" class="bg-gray-700 hover:bg-gray-800 text-white font-semibold py-2 px-4 rounded shadow transition">Admin Panel</button>
+  </header>
+
+  <main class="flex-grow container mx-auto p-4 space-y-8">
+    <!-- Announcement Section -->
+    <section id="announcementSection" class="bg-white rounded shadow p-4">
+      <h2 class="text-xl font-semibold mb-3">Announcements</h2>
+      <div id="announcementList" class="space-y-2 text-gray-700">
+        <!-- Announcements will be loaded here -->
+      </div>
+    </section>
+
+    <!-- Advertising Section -->
+    <section id="advertisingSection" class="bg-white rounded shadow p-4">
+      <h2 class="text-xl font-semibold mb-3">Advertising</h2>
+      <div id="advertisingList" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <!-- Ads images will be loaded here -->
+      </div>
+    </section>
+
+    <!-- Events Section -->
+    <section id="eventsSection" class="bg-white rounded shadow p-4">
+      <h2 class="text-xl font-semibold mb-3">Events</h2>
+      <ul id="eventsList" class="list-disc list-inside text-gray-700 space-y-1">
+        <!-- Events will be loaded here -->
+      </ul>
+    </section>
+  </main>
+
+  <!-- Justice Modal -->
+  <div id="justiceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg shadow-lg max-w-lg w-full p-6 relative">
+      <h3 class="text-lg font-semibold mb-4">File a Claim</h3>
+      <form id="claimForm" class="space-y-4">
+        <div>
+          <label for="claimType" class="block font-medium mb-1">Claim Type</label>
+          <select id="claimType" required class="w-full border border-gray-300 rounded px-3 py-2">
+            <option value="">Select type</option>
+            <option value="Federal">Federal</option>
+            <option value="State">State</option>
+            <option value="Civil">Civil</option>
+          </select>
+        </div>
+        <div>
+          <label for="claimDescription" class="block font-medium mb-1">Description</label>
+          <textarea id="claimDescription" rows="4" required class="w-full border border-gray-300 rounded px-3 py-2"></textarea>
+        </div>
+        <div class="flex justify-end space-x-4">
+          <button type="button" id="cancelClaimBtn" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Submit</button>
+        </div>
+      </form>
+      <button id="closeJusticeModal" class="absolute top-2 right-2 text-gray-600 hover:text-gray-900" aria-label="Close modal">
+        <i class="fas fa-times fa-lg"></i>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Data storage keys
+    const STORAGE_KEYS = {
+      announcements: 'kingdom_announcements',
+      ads: 'kingdom_ads',
+      events: 'kingdom_events',
+      claims: 'kingdom_claims'
+    };
+
+    // Utility to load data from localStorage
+    function loadData(key) {
+      const data = localStorage.getItem(key);
+      return data ? JSON.parse(data) : [];
+    }
+
+    // Utility to save data to localStorage
+    function saveData(key, data) {
+      localStorage.setItem(key, JSON.stringify(data));
+    }
+
+    // Render announcements
+    function renderAnnouncements() {
+      const announcements = loadData(STORAGE_KEYS.announcements);
+      const container = document.getElementById('announcementList');
+      container.innerHTML = '';
+      if (announcements.length === 0) {
+        container.innerHTML = '<p class="text-gray-500">No announcements available.</p>';
+        return;
+      }
+      announcements.forEach(a => {
+        const div = document.createElement('div');
+        div.className = 'border-b border-gray-200 pb-2';
+        div.textContent = a;
+        container.appendChild(div);
+      });
+    }
+
+    // Render ads
+    function renderAds() {
+      const ads = loadData(STORAGE_KEYS.ads);
+      const container = document.getElementById('advertisingList');
+      container.innerHTML = '';
+      if (ads.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 col-span-full">No advertisements available.</p>';
+        return;
+      }
+      ads.forEach(src => {
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = 'Advertisement';
+        img.className = 'rounded shadow object-cover w-full h-32';
+        container.appendChild(img);
+      });
+    }
+
+    // Render events
+    function renderEvents() {
+      const events = loadData(STORAGE_KEYS.events);
+      const container = document.getElementById('eventsList');
+      container.innerHTML = '';
+      if (events.length === 0) {
+        container.innerHTML = '<li class="text-gray-500">No events available.</li>';
+        return;
+      }
+      events.forEach(ev => {
+        const li = document.createElement('li');
+        li.textContent = ev;
+        container.appendChild(li);
+      });
+    }
+
+    // Justice modal controls
+    const justiceModal = document.getElementById('justiceModal');
+    const justiceBtn = document.getElementById('justiceBtn');
+    const closeJusticeModalBtn = document.getElementById('closeJusticeModal');
+    const cancelClaimBtn = document.getElementById('cancelClaimBtn');
+    const claimForm = document.getElementById('claimForm');
+
+    justiceBtn.addEventListener('click', () => {
+      justiceModal.classList.remove('hidden');
+    });
+
+    closeJusticeModalBtn.addEventListener('click', () => {
+      justiceModal.classList.add('hidden');
+      claimForm.reset();
+    });
+
+    cancelClaimBtn.addEventListener('click', () => {
+      justiceModal.classList.add('hidden');
+      claimForm.reset();
+    });
+
+    claimForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const type = document.getElementById('claimType').value;
+      const description = document.getElementById('claimDescription').value.trim();
+      if (!type || !description) return;
+      const claims = loadData(STORAGE_KEYS.claims);
+      claims.push({ type, description, status: 'Pending' });
+      saveData(STORAGE_KEYS.claims, claims);
+      alert('Claim submitted successfully.');
+      justiceModal.classList.add('hidden');
+      claimForm.reset();
+    });
+
+    // Initial render
+    renderAnnouncements();
+    renderAds();
+    renderEvents();
+
+    // Admin panel button click
+    const adminPanelBtn = document.getElementById('adminPanelBtn');
+    adminPanelBtn.addEventListener('click', () => {
+      const accessCode = prompt('Enter admin access code:');
+      if (accessCode === 'Kingdom of Spain 1') {
+        window.location.href = 'admin.html';
+      } else {
+        alert('Access denied. Incorrect code.');
+      }
+    });
+  </script>
+</body>
+</html>
